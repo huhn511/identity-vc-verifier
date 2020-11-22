@@ -5,7 +5,7 @@
         <h1 class="display-4">IOTA Credential Verifier</h1>
         <p class="lead">
           This is a demo application to resolve and verify Verifiable
-          Credentials which are published to the IOTA Tangle Network.
+          Credentials by published Identites in the IOTA Tangle Network.
         </p>
         <hr class="my-4" />
         <p>
@@ -34,7 +34,7 @@
               <input
                 id="vc_input"
                 class="form-control"
-                v-model="vc"
+                v-model="vc_input"
                 type="text"
               />
             </div>
@@ -91,6 +91,7 @@ export default {
   setup() {
     const result = ref(null);
     const vc = `{"@context":"https://www.w3.org/2018/credentials/v1","id":"http://company.com/credentials/1337","type":["VerifiableCredential","CompanyCredential"],"credentialSubject":{"name":"Alice","degree":{"name":"Credential of a Company","type":"CompanyCredential"}},"issuer":"did:iota:main:CzonQki7xYGNWUnMzEoWnuPVrCX91nNTJ3BtoJ7yKCTa","issuanceDate":"2020-11-22T20:29:44Z","proof":{"type":"JcsEd25519Signature2020","verificationMethod":"did:iota:main:CzonQki7xYGNWUnMzEoWnuPVrCX91nNTJ3BtoJ7yKCTa#authentication","created":"2020-11-22T20:29:44Z","signatureValue":"23b2Ls2gAeRqA8fwWDTwyTgzwwDcz7EyGtHWhZ7Ct9uhPf7mwYqKo5pc4vGNET215mXRtZ6wA4QhJyAvmt8RCBvGJ1PraTa1QvT5U9QMjVK8FY2R9DLTZEKuTH7fDo6daBWu"}}`
+    const vc_input = ref(vc);
     const verify_credential = async () => {
       await identity.init();
 
@@ -99,9 +100,9 @@ export default {
         network: "main",
       };
 
-      console.log("key", identity.Key.generateEd25519());
+      console.log("vc_input.value", vc_input.value);
 
-      let res = await identity.checkCredential(vc, network);
+      let res = await identity.checkCredential(vc_input.value, network);
       console.log("result: ", res);
       // add to vue ref
       result.value = res;
@@ -111,6 +112,7 @@ export default {
       vc,
       verify_credential,
       result,
+      vc_input
     };
   },
 };
