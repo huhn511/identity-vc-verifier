@@ -1,97 +1,120 @@
 <template>
-  <img src="./logo.png" />
-  <h1>Hello Vue 3!</h1>
-  <button @click="create_did">Create DID.</button>
-  <button @click="create_did2">Create DID 2.</button>
-  <pre>{{ did }}</pre>
+  <div class="container">
+    <div class="row">
+      <div class="jumbotron">
+        <h1 class="display-4">IOTA Credential Verifier</h1>
+        <p class="lead">
+          This is a demo application to resolve and verify Verifiable
+          Credentials which are published to the IOTA Tangle Network.
+        </p>
+        <hr class="my-4" />
+        <p>
+          To learn more about Verifiable Crententials, Decentral Identifiers and
+          IOTA Identity, checkout this page:
+        </p>
+        <a
+          class="btn btn-primary btn-lg"
+          href="https://github.com/iotaledger/identity.rs"
+          target="_blank"
+          role="button"
+          >Learn more</a
+        >
+      </div>
+    </div>
+    <div class="row">
+      <div class="card" style="width: 100%">
+        <div class="card-body">
+          <h2 class="card-title">Online Verifier</h2>
+          <form @submit.prevent="verify_credential">
+            <div class="form-group form-check">
+              <label class="form-check-label" for="vc_input">
+                Insert Verifiable Credential here</label
+              >
+              <br />
+              <input
+                id="vc_input"
+                class="form-control"
+                v-model="vc"
+                type="text"
+              />
+            </div>
+            <div>
+              <button type="submit" class="btn btn-primary">
+                Verify Credential
+              </button>
+            </div>
+          </form>
+
+          <hr />
+
+          <div v-if="result" class="card" style="width: 100%">
+            <div class="card-body">
+              <h5 class="card-title">Credential Result</h5>
+              <p class="card-text">issuer: {{ result.credential.issuer }}</p>
+              <p class="card-text">
+                <small class="text-muted"
+                  >issuanceDate: {{ result.credential.issuanceDate }}</small
+                >
+              </p>
+              <div v-if="result" class="card" style="width: 100%">
+                <div class="card-body">
+                  <h5 class="card-title">credentialSubject</h5>
+                  <p class="card-text">
+                    Name: {{ result.credential.credentialSubject.name }}
+                  </p>
+                  <p class="card-text">
+                    <small class="text-muted">
+                      name:
+                      {{ result.credential.credentialSubject.degree.name }}
+                      <br />
+                      type:
+                      {{
+                        result.credential.credentialSubject.degree.type
+                      }}</small
+                    >
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
-import { ref } from "vue";
-import identity, * as identity_lib from "iota-identity-wasm-test/web";
+import { ref, onMounted } from "vue";
+import * as identity from "iota-identity-wasm-test/web/";
 
 export default {
   setup() {
-    console.log("identity", identity);
+    const result = ref(null);
+    const vc = `{"@context":"https://www.w3.org/2018/credentials/v1","id":"http://company.com/credentials/1337","type":["VerifiableCredential","CompanyCredential"],"credentialSubject":{"name":"Alice","degree":{"name":"Credential of a Company","type":"CompanyCredential"}},"issuer":"did:iota:main:CzonQki7xYGNWUnMzEoWnuPVrCX91nNTJ3BtoJ7yKCTa","issuanceDate":"2020-11-22T20:29:44Z","proof":{"type":"JcsEd25519Signature2020","verificationMethod":"did:iota:main:CzonQki7xYGNWUnMzEoWnuPVrCX91nNTJ3BtoJ7yKCTa#authentication","created":"2020-11-22T20:29:44Z","signatureValue":"23b2Ls2gAeRqA8fwWDTwyTgzwwDcz7EyGtHWhZ7Ct9uhPf7mwYqKo5pc4vGNET215mXRtZ6wA4QhJyAvmt8RCBvGJ1PraTa1QvT5U9QMjVK8FY2R9DLTZEKuTH7fDo6daBWu"}}`
+    const verify_credential = async () => {
+      await identity.init();
 
-    identity().then((instance) => {
-      console.log("instance", instance);
-      const { key, doc } = instance.Doc.generateCom();
+      let network = {
+        node: "https://nodes.thetangle.org:443",
+        network: "main",
+      };
 
-      console.log("key (generated)", key);
-      console.log("doc (generated)", doc);
+      console.log("key", identity.Key.generateEd25519());
 
-      console.log("doc (unsigned)", doc.document);
-
-      doc.sign(key);
-
-      console.log("doc (signed)", doc.document);
-
-      console.log("doc valid?", doc.verify());
-
-      const json = JSON.stringify(doc.document);
-
-      console.log("From JSON >", instance.Doc.fromJSON(json));
-
-      // instance
-      //   .publish(doc.document, { node: "https://nodes.thetangle.org:443" })
-      //   .then((_res) => {
-      //     console.log("published", _res);
-      //   });
-
-      // console.log("resolved", await res.resolve(alice_document.did, { node: "https://nodes.comnet.thetangle.org:443", network: "com" }))
-    });
-
-    const keyPair = ref();
-    const did = ref();
-    console.log("identity_lib", identity_lib);
-
-    const create_did = () => {
-      identity_lib.newKey().then((_keyPair) => {
-        keyPair.value = JSON.stringify(_keyPair);
-        console.log("keyPair", keyPair);
-        identity_lib.newDID(_keyPair.public).then((r) => {
-          did.value = JSON.stringify(r);
-          console.log("did.value", did.value);
-        });
-      });
+      let res = await identity.checkCredential(vc, network);
+      console.log("result: ", res);
+      // add to vue ref
+      result.value = res;
     };
-
-    const create_did2 = () => {
-      identity().then((lib) => {
-        let keyPair = new lib.Key();
-        console.log("keyPair", keyPair);
-        did.value = JSON.stringify(new lib.DID(keyPair.public));
-        console.log("did", did.value);
-      });
-    };
-
-    // let key = new identity.Key();
-    // console.log("key", key);
 
     return {
-      did,
-      create_did,
-      create_did2,
+      vc,
+      verify_credential,
+      result,
     };
   },
 };
 </script>
 
 <style scoped>
-body {
-  max-width: 800px;
-}
-img {
-  width: 200px;
-}
-h1 {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-pre {
-  height: 50px;
-  width: 100%;
-  overflow: auto;
-}
 </style>

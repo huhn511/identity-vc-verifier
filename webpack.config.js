@@ -9,7 +9,7 @@ module.exports = (env = {}) => ({
   devtool: env.prod ? 'source-map' : 'eval-cheap-module-source-map',
   entry: path.resolve(__dirname, './src/main.js'),
   output: {
-    path: path.resolve(__dirname, './dist'),
+    path: path.resolve(__dirname, './'),
     publicPath: '/'
   },
   resolve: {
