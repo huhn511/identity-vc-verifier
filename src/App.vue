@@ -87,11 +87,31 @@
 import { ref, onMounted } from "vue";
 import * as identity from "iota-identity-wasm-test/web/";
 
+function getUrlVars() {
+  var vars = {};
+  var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (
+    m,
+    key,
+    value
+  ) {
+    vars[key] = value;
+  });
+  return vars;
+}
+
 export default {
   setup() {
     const result = ref(null);
-    const vc = `{"@context":"https://www.w3.org/2018/credentials/v1","id":"http://company.com/credentials/1337","type":["VerifiableCredential","CompanyCredential"],"credentialSubject":{"name":"Alice","degree":{"name":"Credential of a Company","type":"CompanyCredential"}},"issuer":"did:iota:main:CzonQki7xYGNWUnMzEoWnuPVrCX91nNTJ3BtoJ7yKCTa","issuanceDate":"2020-11-22T20:29:44Z","proof":{"type":"JcsEd25519Signature2020","verificationMethod":"did:iota:main:CzonQki7xYGNWUnMzEoWnuPVrCX91nNTJ3BtoJ7yKCTa#authentication","created":"2020-11-22T20:29:44Z","signatureValue":"23b2Ls2gAeRqA8fwWDTwyTgzwwDcz7EyGtHWhZ7Ct9uhPf7mwYqKo5pc4vGNET215mXRtZ6wA4QhJyAvmt8RCBvGJ1PraTa1QvT5U9QMjVK8FY2R9DLTZEKuTH7fDo6daBWu"}}`
+    const vc = `{"@context":"https://www.w3.org/2018/credentials/v1","id":"http://company.com/credentials/1337","type":["VerifiableCredential","CompanyCredential"],"credentialSubject":{"name":"Alice","degree":{"name":"Credential of a Company","type":"CompanyCredential"}},"issuer":"did:iota:main:CzonQki7xYGNWUnMzEoWnuPVrCX91nNTJ3BtoJ7yKCTa","issuanceDate":"2020-11-22T20:29:44Z","proof":{"type":"JcsEd25519Signature2020","verificationMethod":"did:iota:main:CzonQki7xYGNWUnMzEoWnuPVrCX91nNTJ3BtoJ7yKCTa#authentication","created":"2020-11-22T20:29:44Z","signatureValue":"23b2Ls2gAeRqA8fwWDTwyTgzwwDcz7EyGtHWhZ7Ct9uhPf7mwYqKo5pc4vGNET215mXRtZ6wA4QhJyAvmt8RCBvGJ1PraTa1QvT5U9QMjVK8FY2R9DLTZEKuTH7fDo6daBWu"}}`;
     const vc_input = ref(vc);
+
+    onMounted(() => {
+      var vc_param = getUrlVars()["vc"];
+      if (vc_param) {
+        vc_input.value = decodeURIComponent(vc_param)
+        verify_credential();
+      }
+    });
     const verify_credential = async () => {
       await identity.init();
 
@@ -112,7 +132,7 @@ export default {
       vc,
       verify_credential,
       result,
-      vc_input
+      vc_input,
     };
   },
 };
